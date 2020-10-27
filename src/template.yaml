@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: Serverless To Do Application
+
+Parameters:
+  Lifecycle:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+  BucketName:
+    Type: String
+    Default: jmm-to-do-ui
+
+Globals:
+  Function:
+    Runtime: python3.8
+    Timeout: 3
+    Layers:
+      - Ref: ToDoLayer
+    Environment:
+      Variables:
+        TABLE_NAME:
+          Ref: ToDoTable
+
+Resources:
+  ToDoTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: "ToDo-${Lifecycle}"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ToDoLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: ToDoLayer
+      ContentUri: api/app
+      CompatibleRuntimes:
+        - python3.8
+    Metadata:
+      BuildMethod: python3.8
+
+  ToDoApi:
+    Name:
+      Fn::Sub: "ToDoApi-${Lifecycle}"
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: v1
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: "ToDoLambdaRole-${Lifecycle}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "sts:AssumeRole"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSLambdaExecute"
+      Policies:
+        - PolicyName:
+            Fn::Sub: "ToDoTablePolicy-${Lifecycle}"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "dynamodb:*"
+                Resource:
+                  Fn::GetAtt: [ToDoTable, Arn]
+
+  LambdaCreateToDo:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: "CreateToDo-${Lifecycle}"
+      CodeUri: api/handlers
+      Handler: to_do.create_to_do
+      Role:
+        Fn::GetAtt: [LambdaRole, Arn]
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ToDoApi
+            Path: /todos
+            Method: post
+
+  LambdaGetToDos:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: "GetToDos-${Lifecycle}"
+      CodeUri: api/handlers
+      Handler: to_do.get_to_dos
+      Role:
+        Fn::GetAtt: [LambdaRole, Arn]
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ToDoApi
+            Path: /todos
+            Method: get
+
+  LambdaGetToDo:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: "GetToDo-${Lifecycle}"
+      CodeUri: api/handlers
+      Handler: to_do.get_to_do
+      Role:
+        Fn::GetAtt: [LambdaRole, Arn]
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ToDoApi
+            Path: /todos/{id}
+            Method: get
+
+  UIS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName:
+        Ref: BucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+Outputs:
+  ToDoApiUrl:
+    Description: ToDo API
+    Value:
+      Fn::Sub: "https://${ToDoApi}.execute-api.${AWS::Region}.amazonaws.com/v1"
+  UIS3Bucket:
+    Description: S3 bucket for static files
+    Value:
+      Fn::GetAtt: [UIS3Bucket, Arn]
+  UIUrl:
+    Description: S3 bucket public ToDoApiUrl
+    Value:
+      Fn::GetAtt: [UIS3Bucket, WebsiteURL]

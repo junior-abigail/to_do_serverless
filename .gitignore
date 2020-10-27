@@ -1,0 +1,6 @@
+.venv
+.vscode/
+build.toml
+.build_output/
+__pycache__/
+*.pyc
