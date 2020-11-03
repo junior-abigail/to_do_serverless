@@ -13,6 +13,6 @@ fi
 source ${PROJECT_DIR}/scripts/build.sh ${BUILD_STAGE}
 
 # run api
-sam local start-api --template ${BACKEND_BUILD_DIR}/template.yaml
+sam local start-api --template ${BUILD_DIR_API}/template.yaml
 
 set +e
