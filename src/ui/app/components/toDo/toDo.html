@@ -1,7 +1,9 @@
 <div class="to-do">
-  <h3 class="title">{{toDo.title}}</h3>
-  <span class="close-button">X</span>
-  <p class="details">{{toDo.details}}</p>
+  <span class="header">
+    <h3 class="title">{{title}}</h3>
+    <span class="close-button">X</span>
+  </span>
+  <p class="details">{{details}}</p>
 </div>
 
 <style>
@@ -12,12 +14,21 @@
     padding: 1rem;
   }
 
-  .to-do .title {
+  .header {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .header * {
+    margin: 0 0.5rem;
+  }
+
+  .title {
     margin: 0;
     display: inline-block;
   }
 
-  .to-do .close-button {
+  .close-button {
     cursor: pointer;
   }
 </style>

@@ -4,11 +4,12 @@ import htmlTemplate from "./toDo.html";
 export class ToDo extends BaseComponent {
 
   constructor(id, status, title, details) {
-    super(htmlTemplate, { toDo: { id, status, title, details } });
+    super(htmlTemplate, false);
     this.id = id;
     this.status = status;
     this.title = title;
     this.details = details;
+    this.render();
   }
 
   static get eventListeners() {

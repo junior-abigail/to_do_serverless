@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 
 module.exports = {
@@ -12,6 +13,9 @@ module.exports = {
     path: process.env["BUILD_DIR_UI"]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      API_URL: JSON.stringify(process.env.API_URL)
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "app/index.html")
     }),

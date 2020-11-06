@@ -2,13 +2,12 @@
 
 export class BaseComponent extends HTMLElement {
 
-  constructor(htmlString, templateValues) {
+  constructor(htmlString, renderOnInit = true) {
     super();
+    this.htmlString = htmlString;
     this.attachShadow({ mode: "open" });
-    if (templateValues) { htmlString = interpolate(htmlString, templateValues) }
-    this.shadowRoot.innerHTML = htmlString;
     this.reflectObservedAttributes();
-    this.addEventListeners();
+    if (renderOnInit) { this.render(); }
   }
 
   reflectObservedAttributes() {
@@ -30,6 +29,17 @@ export class BaseComponent extends HTMLElement {
     });
   }
 
+  render() {
+    function replacer(templateExpression, expressionKey) {
+      let replacement = this;
+      expressionKey.split(".").map(token => replacement = replacement[token]);
+      let should_replace = typeof replacement === 'string' || typeof replacement === 'number';
+      return should_replace ? replacement : templateExpression;
+    }
+    this.shadowRoot.innerHTML = this.htmlString.replace(/{{([^{}]*)}}/g, replacer.bind(this));
+    this.addEventListeners();
+  }
+
   addEventListeners() {
     let eventListeners = this.constructor.eventListeners || [];
     eventListeners.map(e => {
@@ -43,20 +53,3 @@ export class BaseComponent extends HTMLElement {
   }
 
 }
-
-/**
- * Function replaces tokens in the htmlString surrounded by double curly braces
- * with their corresponding values from the templateValues object. It uses the
- * String.replace method with an regexp for matching the double curly braces
- * pattern, and a callback function for performing the replacement.
- * @param {string} htmlString
- * @param {object} templateValues
- */
-function interpolate(htmlString, templateValues) {
-  return htmlString.replace(/{{([^{}]*)}}/g, (match, key) => {
-    let replacement = templateValues; // start with the templateValues object
-    key.split(".").map(token => replacement = replacement[token]); // find nested keys values
-    let should_replace = typeof replacement === 'string' || typeof replacement === 'number';
-    return should_replace ? replacement : match;
-  });
-};

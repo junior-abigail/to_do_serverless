@@ -6,7 +6,6 @@ export class ToDoContainer extends BaseComponent {
 
   constructor() {
     super(htmlString);
-    this.el = this.shadowRoot.querySelector("#to-do-container");
     this.toDos = [];
   }
 
@@ -32,13 +31,14 @@ export class ToDoContainer extends BaseComponent {
   }
 
   updateItems() {
-    this.el.innerHTML = ""; // clear contents of the container
+    let el = this.shadowRoot.querySelector("#to-do-container");
+    el.innerHTML = ""; // clear contents of the container
     for (let item of this.items) {
       let { id, status, title, details } = item;
       let toDo = new ToDo(id, status, title, details);
       toDo.addEventListener("delete-to-do", (event) => this.deleteItem(event.target));
       this.toDos.push(toDo);
-      this.el.appendChild(toDo);
+      el.appendChild(toDo);
     }
   }
 
