@@ -4,6 +4,9 @@ Transform: AWS::Serverless-2016-10-31
 Description: Serverless To Do Application
 
 Parameters:
+  Region:
+    Type: String
+    Default: us-east-1
   Lifecycle:
     Type: String
     Default: dev
@@ -51,6 +54,8 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: v1
+      Cors:
+        AllowOrigin: "'*'"
 
   LambdaRole:
     Type: AWS::IAM::Role
@@ -146,7 +151,7 @@ Outputs:
   ToDoApiUrl:
     Description: ToDo API
     Value:
-      Fn::Sub: "https://${ToDoApi}.execute-api.${AWS::Region}.amazonaws.com/v1"
+      Fn::Sub: "https://${ToDoApi}.execute-api.${Region}.amazonaws.com/v1"
   UIS3Bucket:
     Description: S3 bucket for static files
     Value:
